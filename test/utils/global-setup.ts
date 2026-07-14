@@ -3,6 +3,7 @@ import { Client } from 'pg';
 import { DataSource } from 'typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { InitSchema1783692571893 } from '../../src/persistence/migrations/1783692571893-InitSchema';
+import { WidenIdempotencyScope1784023546066 } from '../../src/persistence/migrations/1784023546066-WidenIdempotencyScope';
 
 /**
  * Выполняется один раз перед e2e-набором (jest globalSetup, основной процесс):
@@ -42,7 +43,7 @@ export default async function globalSetup(): Promise<void> {
     username: user,
     password,
     database: testDb,
-    migrations: [InitSchema1783692571893],
+    migrations: [InitSchema1783692571893, WidenIdempotencyScope1784023546066],
     namingStrategy: new SnakeNamingStrategy(),
   });
   await ds.initialize();

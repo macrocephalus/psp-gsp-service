@@ -12,7 +12,9 @@ export class IdempotencyKey {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 64 })
+  // 128, не 64: scope = `<source>:<provider>`, провайдер сам по себе
+  // может занимать 64 символа (лимит валидации в guard)
+  @Column({ type: 'varchar', length: 128 })
   scope: string;
 
   @Column({ type: 'varchar', length: 64 })

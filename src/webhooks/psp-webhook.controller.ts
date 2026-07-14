@@ -20,6 +20,7 @@ import { RawEventSource } from './entities/raw-event.entity';
 import { WebhookPayloadDto } from './dto/webhook-payload.dto';
 import { WebhookSignatureGuard } from './guards/webhook-signature.guard';
 import { IngestCallbackUseCase } from './ingestion/ingest-callback.use-case';
+import { pickPersistedHeaders } from './webhook-headers';
 
 @ApiTags('webhooks/psp')
 @Controller('webhooks/psp')
@@ -68,7 +69,7 @@ export class PspWebhookController {
         // req.body — оригинальный распарсенный JSON: whitelist-pipe срезает
         // неизвестные поля только из DTO, а сохраняем мы полный payload провайдера
         payload: req.body,
-        headers: { 'x-brand-id': req.headers['x-brand-id'] },
+        headers: pickPersistedHeaders(req.headers),
       }),
     );
   }

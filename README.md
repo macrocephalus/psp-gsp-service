@@ -30,7 +30,7 @@ See [DECISIONS.md](./DECISIONS.md) for the reasoning behind these choices and
 
 | Requirement | Where |
 | --- | --- |
-| Callbacks saved to `raw_events` | `IngestCallbackUseCase` — full provider payload + headers, `status`/`processed_at` as outbox hooks |
+| Callbacks saved to `raw_events` | `IngestCallbackUseCase` — full provider payload + an allowlist of non-sensitive headers, `status`/`processed_at` as outbox hooks |
 | Idempotency for repeated callbacks | `idempotency_keys` UNIQUE + `INSERT … ON CONFLICT DO NOTHING` in one transaction; e2e covers concurrent retries |
 | Tenant isolation (`brandId`) | ALS tenant context (fail-closed) + HMAC binds `X-Brand-Id` to the signature; e2e leakage suite |
 | No direct balance updates | Webhook adapters only persist; there is no balance/ledger write path at all — a future ledger consumer reads `raw_events` |
@@ -123,7 +123,7 @@ test/
 | `JWT_SECRET` | JWT signing secret (min 16 chars) |
 | `JWT_TTL` | Access token lifetime (e.g. `900s`) |
 | `SESSION_MAX_LIFETIME` | Absolute session ceiling for `/auth/refresh` (default `24h`) |
-| `PSP_WEBHOOK_SECRET` | HMAC secret for `/webhooks/psp/*` |
-| `GSP_WEBHOOK_SECRET` | HMAC secret for `/webhooks/gsp/*` |
+| `PSP_WEBHOOK_SECRET` | HMAC secret shared by all `/webhooks/psp/*` providers (per-provider secrets: see DECISIONS.md) |
+| `GSP_WEBHOOK_SECRET` | HMAC secret shared by all `/webhooks/gsp/*` providers (per-provider secrets: see DECISIONS.md) |
 
 Boot fails fast if any required variable is missing or invalid.

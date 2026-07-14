@@ -153,6 +153,35 @@ describe('Webhook idempotency (e2e)', () => {
     expect(rows[0].payload.timestamp).toBe('2026-07-13T10:00:00Z');
   });
 
+  it('accepts a provider id at the 64-char validation limit (scope fits in the column)', async () => {
+    // регрессия: scope = `psp:` + provider (68 символов) раньше не влезал
+    // в varchar(64) и ронял запрос в 500 уже после валидации
+    const longProvider = 'p'.repeat(64);
+
+    const res = await request(app.getHttpServer())
+      .post(`/webhooks/psp/${longProvider}`)
+      .set('Content-Type', 'application/json')
+      .set('X-Brand-Id', 'brandA')
+      .set('X-Signature', signBody('brandA', body, secret))
+      .send(body)
+      .expect(200);
+
+    expect((res.body as OutcomeBody).outcome).toBe('accepted');
+  });
+
+  it('persists allowlisted headers only — the signature never lands in raw_events', async () => {
+    await send().expect(200);
+
+    const ds = app.get(DataSource);
+    const rows = await ds.query<Array<{ headers: Record<string, unknown> }>>(
+      `SELECT headers FROM raw_events WHERE external_event_id = 'evt_concurrent_1'`,
+    );
+    expect(rows[0].headers['x-brand-id']).toBe('brandA');
+    expect(rows[0].headers['content-type']).toBe('application/json');
+    expect(rows[0].headers['x-signature']).toBeUndefined();
+    expect(rows[0].headers['authorization']).toBeUndefined();
+  });
+
   it('rejects payload without eventId (400) and persists nothing', async () => {
     const invalidBody = JSON.stringify({
       type: 'deposit.succeeded',
